@@ -106,7 +106,8 @@ echo "--- Submitting DELETE request for LPAR ID: ${PVM_INSTANCE_ID} ---"
 
 # Use DELETE method targeting the specific instance ID (ibmcloud pi instance-delete equivalent) [1-3]
 RESPONSE=$(curl -s -X DELETE "${DELETE_URL}?version=${API_VERSION}" \
-  -H "Authorization: Bearer ${IAM_TOKEN}")
+  -H "Authorization: Bearer ${IAM_TOKEN}" \
+  -H "Hmc-CRN: ${PVS_CRN}")
 
 # -------------------------
 # 5. Success Check (for deletion)

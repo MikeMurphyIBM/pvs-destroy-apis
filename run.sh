@@ -9,6 +9,9 @@ echo "=== EMPTY IBM i Destruction Script ==="
 # Authentication Key (Provided via Code Engine secret)
 API_KEY="${IBMCLOUD_API_KEY}"
 
+# Full PowerVS CRN (MUST be used in the request header)
+PVS_CRN="crn:v1:bluemix:public:power-iaas:dal10:a/21d74dd4fe814dfca20570bbb93cdbff:cc84ef2f-babc-439f-8594-571ecfcbe57a::"
+
 # PowerVS Identifiers (Copied from Provisioning Script)
 REGION="us-south"
 CLOUD_INSTANCE_ID="cc84ef2f-babc-439f-8594-571ecfcbe57a"
@@ -51,7 +54,8 @@ echo "--- Searching for LPAR ID using name: ${LPAR_NAME} ---"
 
 # Send GET request to list all instances
 INSTANCE_LIST=$(curl -s -X GET "${LIST_URL}" \
-  -H "Authorization: Bearer ${IAM_TOKEN}")
+  -H "Authorization: Bearer ${IAM_TOKEN}"\
+  -H "IBM-Service-Instance-Id: ${PVS_CRN}")
 
 # --- DEBUGGING STEP: Inspect the raw API response ---
 echo "--- Raw PowerVS Instance List Response ---"

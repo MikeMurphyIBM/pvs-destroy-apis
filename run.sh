@@ -52,39 +52,46 @@ LIST_URL="${PVS_API_BASE}/v1/cloud-instances/${CLOUD_INSTANCE_ID}/pvm-instances?
 
 echo "--- Searching for LPAR ID using name: ${LPAR_NAME} ---"
 
-# Send GET request to list all instances
-INSTANCE_LIST=$(curl -s -X GET "${LIST_URL}" \
+# Send GET request to list all instances, capturing response body AND HTTP code
+RESPONSE=$(curl -s -X GET "${LIST_URL}" \
+  -w "%{http_code}" \
   -H "Authorization: Bearer ${IAM_TOKEN}"\
   -H "IBM-Service-Instance-Id: ${PVS_CRN}")
 
+# Separate the HTTP code (last 3 characters) from the response body
+HTTP_CODE=${RESPONSE: -3}
+INSTANCE_LIST=${RESPONSE: 0: ${#RESPONSE}-3}
+
 # --- DEBUGGING STEP: Inspect the raw API response ---
 echo "--- Raw PowerVS Instance List Response ---"
-# Use jq (a third-party tool [1, 2]) to pretty-print the raw JSON response to the logs
+echo "HTTP Status Code: ${HTTP_CODE}"
+echo "Response Body:"
 echo "$INSTANCE_LIST" | jq .
 echo "----------------------------------------------"
 
-# Check 1: Did the PowerVS API return a structured error response (e.g., unauthorized access)?
-# This check prevents the 'jq: Cannot iterate over null' error if the API failed the request entirely.
-if echo "$INSTANCE_LIST" | jq -e '.errors' >/dev/null 2>&1; then
-    echo "CRITICAL ERROR: PowerVS API returned an error during the instance LIST lookup."
-    # If a critical API error occurred, exit 1 to signal failure to Code Engine (CE)
+# NEW Check 1: Check for critical HTTP failures (e.g., 403)
+if [ "$HTTP_CODE" != "200" ]; then
+    echo "❌ CRITICAL ERROR: PowerVS API lookup failed with HTTP Status ${HTTP_CODE}."
+    echo "This indicates an issue with API configuration, permissions, or connectivity."
+    # Exit 1 signals definitive job failure to Code Engine (CE)
     exit 1
 fi
 
 
-# Check 2: Attempt to filter the list (expected to be in the .pvmInstances[] array)
+# Check 2: Attempt to filter the list (This step only runs if HTTP_CODE was 200)
 PVM_INSTANCE_ID=$(echo "$INSTANCE_LIST" | \
   jq -r '.pvmInstances[] | select(.serverName == "'"${LPAR_NAME}"'") | .pvmInstanceID')
   
 # Check 3: Determine the outcome (LPAR Found or Already Gone)
 if [ -z "$PVM_INSTANCE_ID" ] || [ "$PVM_INSTANCE_ID" = "null" ]; then
     echo "LPAR ${LPAR_NAME} not found or already deleted. Exiting safely."
-    # Exit 0 here is crucial: it confirms the desired end state (LPAR absence) was reached, marking the CE job as Succeeded.
+    # Exit 0 here is crucial: it confirms the desired end state (LPAR absence) was reached.
     exit 0
 else
     echo "--- Found Instance ID: ${PVM_INSTANCE_ID} ---"
     # The script continues execution to Section 4 (Deletion)
 fi
+
 # -------------------------
 # 4. API Call: Delete LPAR
 # -------------------------

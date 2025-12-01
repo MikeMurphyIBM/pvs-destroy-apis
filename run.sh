@@ -19,7 +19,7 @@ LPAR_NAME="empty-ibmi-lpar"
 # API Version used for requests
 API_VERSION="2024-02-28"
 
-PVS_API_BASE="https://${REGION}.power-iaas.cloud.ibm.com"
+PVS_API_BASE="https://${REGION}.power-iaas.cloud.ibm.com/pcloud"
 
 # -------------------------
 # 2. IAM Token (Authentication)

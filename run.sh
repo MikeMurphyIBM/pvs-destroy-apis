@@ -60,7 +60,7 @@ echo "DEBUG: PVS_CRN value being used in curl: ${PVS_CRN}"
 RESPONSE=$(curl -s -X GET "${LIST_URL}" \
   -w "%{http_code}" \
   -H "Authorization: Bearer ${IAM_TOKEN}"\
-  -H "CRN: ${PVS_CRN}")
+  -H "Hmc-CRN: ${PVS_CRN}")
 
 # Separate the HTTP code (last 3 characters) from the response body
 HTTP_CODE=${RESPONSE: -3}

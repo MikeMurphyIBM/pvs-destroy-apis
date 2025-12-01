@@ -31,7 +31,7 @@ echo "--- Requesting IAM access token ---"
 IAM_TOKEN=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${API_KEY}" \
-  | jq -r '.access_token') [5]
+  | jq -r '.access_token')
 
 if [ "$IAM_TOKEN" = "null" ] || [ -z "$IAM_TOKEN" ]; then
   echo " ERROR retrieving IAM token"

@@ -49,22 +49,38 @@ LIST_URL="${PVS_API_BASE}/v1/cloud-instances/${CLOUD_INSTANCE_ID}/pvm-instances?
 
 echo "--- Searching for LPAR ID using name: ${LPAR_NAME} ---"
 
-# Send GET request to list all instances (ibmcloud pi instance list equivalent) [6-8]
+# Send GET request to list all instances
 INSTANCE_LIST=$(curl -s -X GET "${LIST_URL}" \
   -H "Authorization: Bearer ${IAM_TOKEN}")
 
-# Filter the list (stored in .pvmInstances[] by default) by 'serverName' and extract 'pvmInstanceID'
+# --- DEBUGGING STEP: Inspect the raw API response ---
+echo "--- Raw PowerVS Instance List Response ---"
+# Use jq (a third-party tool [1, 2]) to pretty-print the raw JSON response to the logs
+echo "$INSTANCE_LIST" | jq .
+echo "----------------------------------------------"
+
+# Check 1: Did the PowerVS API return a structured error response (e.g., unauthorized access)?
+# This check prevents the 'jq: Cannot iterate over null' error if the API failed the request entirely.
+if echo "$INSTANCE_LIST" | jq -e '.errors' >/dev/null 2>&1; then
+    echo "CRITICAL ERROR: PowerVS API returned an error during the instance LIST lookup."
+    # If a critical API error occurred, exit 1 to signal failure to Code Engine (CE)
+    exit 1
+fi
+
+
+# Check 2: Attempt to filter the list (expected to be in the .pvmInstances[] array)
 PVM_INSTANCE_ID=$(echo "$INSTANCE_LIST" | \
   jq -r '.pvmInstances[] | select(.serverName == "'"${LPAR_NAME}"'") | .pvmInstanceID')
   
-# Check if the LPAR ID was successfully retrieved
+# Check 3: Determine the outcome (LPAR Found or Already Gone)
 if [ -z "$PVM_INSTANCE_ID" ] || [ "$PVM_INSTANCE_ID" = "null" ]; then
-    echo " LPAR ${LPAR_NAME} not found or already deleted. Exiting safely."
+    echo "LPAR ${LPAR_NAME} not found or already deleted. Exiting safely."
+    # Exit 0 here is crucial: it confirms the desired end state (LPAR absence) was reached, marking the CE job as Succeeded.
     exit 0
+else
+    echo "--- Found Instance ID: ${PVM_INSTANCE_ID} ---"
+    # The script continues execution to Section 4 (Deletion)
 fi
-
-echo "--- Found Instance ID: ${PVM_INSTANCE_ID} ---"
-
 # -------------------------
 # 4. API Call: Delete LPAR
 # -------------------------

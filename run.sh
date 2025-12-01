@@ -52,6 +52,10 @@ LIST_URL="${PVS_API_BASE}/v1/cloud-instances/${CLOUD_INSTANCE_ID}/pvm-instances?
 
 echo "--- Searching for LPAR ID using name: ${LPAR_NAME} ---"
 
+
+# New debug line to verify the CRN value
+echo "DEBUG: PVS_CRN value being used in curl: ${PVS_CRN}"
+
 # Send GET request to list all instances, capturing response body AND HTTP code
 RESPONSE=$(curl -s -X GET "${LIST_URL}" \
   -w "%{http_code}" \

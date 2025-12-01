@@ -75,7 +75,7 @@ echo "----------------------------------------------"
 
 # NEW Check 1: Check for critical HTTP failures (e.g., 403)
 if [ "$HTTP_CODE" != "200" ]; then
-    echo "❌ CRITICAL ERROR: PowerVS API lookup failed with HTTP Status ${HTTP_CODE}."
+    echo "CRITICAL ERROR: PowerVS API lookup failed with HTTP Status ${HTTP_CODE}."
     echo "This indicates an issue with API configuration, permissions, or connectivity."
     # Exit 1 signals definitive job failure to Code Engine (CE)
     exit 1

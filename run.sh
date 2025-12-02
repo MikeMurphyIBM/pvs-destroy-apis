@@ -44,7 +44,7 @@ fi
 echo "--- Token acquired ---"
 
 # -------------------------
-# 3. Dynamic Lookup: Get PVM Instance ID by LPAR Name
+# 3. Dynamic Lookup: Get PVS Instance ID by LPAR Name
 # -------------------------
 
 # API endpoint to list all instances in the workspace
@@ -53,7 +53,7 @@ LIST_URL="${PVS_API_BASE}/v1/cloud-instances/${CLOUD_INSTANCE_ID}/pvm-instances?
 echo "--- Searching for LPAR ID using name: ${LPAR_NAME} ---"
 
 
-# New debug line to verify the CRN value
+# debug line to verify the CRN value
 echo "DEBUG: PVS_CRN value being used in curl: ${PVS_CRN}"
 
 # Send GET request to list all instances, capturing response body AND HTTP code
@@ -73,7 +73,7 @@ echo "Response Body:"
 echo "$INSTANCE_LIST" | jq .
 echo "----------------------------------------------"
 
-# NEW Check 1: Check for critical HTTP failures (e.g., 403)
+# Check 1: Check for critical HTTP failures (e.g., 403)
 if [ "$HTTP_CODE" != "200" ]; then
     echo "CRITICAL ERROR: PowerVS API lookup failed with HTTP Status ${HTTP_CODE}."
     echo "This indicates an issue with API configuration, permissions, or connectivity."
@@ -104,7 +104,7 @@ DELETE_URL="${PVS_API_BASE}/v1/cloud-instances/${CLOUD_INSTANCE_ID}/pvm-instance
 
 echo "--- Submitting DELETE request for LPAR ID: ${PVM_INSTANCE_ID} ---"
 
-# Use DELETE method targeting the specific instance ID (ibmcloud pi instance-delete equivalent) [1-3]
+# Use DELETE method targeting the specific instance ID (ibmcloud pi instance-delete equivalent)
 RESPONSE=$(curl -s -X DELETE "${DELETE_URL}?version=${API_VERSION}" \
   -H "Authorization: Bearer ${IAM_TOKEN}" \
   -H "CRN: ${PVS_CRN}")
